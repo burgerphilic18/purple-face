@@ -2,7 +2,11 @@ import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { DrizzleClient } from "../db/index";
 import { users } from "../db/schema/user.schema";
-import { userDetailsParamsSchema, userUpdateSchema , User } from "../dto/user.dto";
+import {
+	type User,
+	userDetailsParamsSchema,
+	userUpdateSchema,
+} from "../dto/user.dto";
 import { authenticateUser, optionalAuth } from "./auth";
 
 export async function userRoutes(fastify: FastifyInstance) {
