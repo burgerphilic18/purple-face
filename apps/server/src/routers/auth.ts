@@ -260,7 +260,7 @@ export const authenticateUser: AuthenticationMiddleware = async (
 			return reply.status(401).send({ error: "Invalid authentication token" });
 		}
 
-		(request as AuthenticatedRequest).userId = jwtValidation.data.userId;
+		request.userId = jwtValidation.data.userId;
 	} catch (err) {
 		request.log.error("Authentication error:", err);
 		return reply.status(401).send({ error: "Invalid authentication token" });
@@ -270,7 +270,7 @@ export const authenticateUser: AuthenticationMiddleware = async (
 // Optional authentication middleware - doesn't block request if no auth
 export const optionalAuth: AuthenticationMiddleware = async (
 	request,
-	reply,
+	_reply,
 ) => {
 	try {
 		const token = request.cookies.auth_token;
@@ -280,7 +280,7 @@ export const optionalAuth: AuthenticationMiddleware = async (
 		const jwtValidation = jwtPayloadSchema.safeParse(decoded);
 
 		if (jwtValidation.success) {
-			(request as AuthenticatedRequest).userId = jwtValidation.data.userId;
+			request.userId = jwtValidation.data.userId;
 		}
 	} catch (err) {
 		// Ignore auth errors for optional auth

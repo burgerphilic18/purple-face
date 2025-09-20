@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/ui/footer";
+import Header from "@/components/ui/header";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import Header from "@/components/ui/header";
-import Footer from "@/components/ui/footer";
 
 interface ProfileFormData {
 	username: string;
@@ -79,7 +79,7 @@ export default function MyProfilePage() {
 			};
 
 			// Remove empty strings (convert to null)
-			const cleanedData: any = {};
+			const cleanedData: Record<string, unknown> = {};
 			Object.entries(updateData).forEach(([key, value]) => {
 				cleanedData[key] = value === "" ? null : value;
 			});

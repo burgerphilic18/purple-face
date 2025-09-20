@@ -1,8 +1,8 @@
-import type { FastifyInstance } from "fastify";
 import { eq } from "drizzle-orm";
+import type { FastifyInstance } from "fastify";
 import { DrizzleClient } from "../db/index";
 import { users } from "../db/schema/user.schema";
-import type { AuthenticatedRequest } from "../types/auth.types";
+import { userDetailsParamsSchema, userUpdateSchema } from "../dto/user.dto";
 import { authenticateUser, optionalAuth } from "./auth";
 
 export async function userRoutes(fastify: FastifyInstance) {
@@ -12,9 +12,8 @@ export async function userRoutes(fastify: FastifyInstance) {
 		{ preHandler: optionalAuth },
 		async (request, reply) => {
 			try {
-				const { username } = request.params as { username: string };
-				const authenticatedUserId =
-					(request as AuthenticatedRequest).userId || null;
+				const { username } = userDetailsParamsSchema.parse(request.params);
+				const authenticatedUserId = request.userId ?? null;
 
 				// Fetch user details by username
 				const user = await DrizzleClient.query.users.findFirst({
@@ -86,7 +85,12 @@ export async function userRoutes(fastify: FastifyInstance) {
 		{ preHandler: authenticateUser },
 		async (request, reply) => {
 			try {
-				const userId = (request as AuthenticatedRequest).userId;
+				const userId = request.userId;
+				if (!userId) {
+					return reply
+						.status(401)
+						.send({ error: "Unauthorized", success: false });
+				}
 
 				const user = await DrizzleClient.query.users.findFirst({
 					where: (u, { eq }) => eq(u.id, userId),
@@ -131,32 +135,18 @@ export async function userRoutes(fastify: FastifyInstance) {
 		{ preHandler: authenticateUser },
 		async (request, reply) => {
 			try {
-				const userId = (request as AuthenticatedRequest).userId;
-				const updateData = request.body as Partial<{
-					username: string;
-					firstName: string;
-					lastName: string;
-					pronouns: string;
-					bio: string;
-					branch: string;
-					passingOutYear: number;
-				}>;
+				const userId = request.userId;
+				if (!userId) {
+					return reply
+						.status(401)
+						.send({ error: "Unauthorized", success: false });
+				}
+				const updateData = userUpdateSchema.parse(request.body as unknown);
 
 				// Remove any fields that shouldn't be updated via this endpoint
-				const allowedFields = [
-					"username",
-					"firstName",
-					"lastName",
-					"pronouns",
-					"bio",
-					"branch",
-					"passingOutYear",
-				];
 				const filteredData = Object.fromEntries(
-					Object.entries(updateData).filter(([key]) =>
-						allowedFields.includes(key),
-					),
-				);
+					Object.entries(updateData).filter(([, v]) => v !== undefined),
+				) as Partial<typeof users.$inferInsert>;
 
 				if (Object.keys(filteredData).length === 0) {
 					return reply.status(400).send({
@@ -165,10 +155,21 @@ export async function userRoutes(fastify: FastifyInstance) {
 					});
 				}
 
-				const updatedUser = await DrizzleClient.update(users)
-					.set(filteredData)
-					.where(eq(users.id, userId))
-					.returning();
+				let updatedUser: Array<typeof users.$inferSelect>;
+				try {
+					updatedUser = await DrizzleClient.update(users)
+						.set(filteredData)
+						.where(eq(users.id, userId))
+						.returning();
+				} catch (e) {
+					if (e instanceof Error && /unique|duplicate/i.test(e.message)) {
+						return reply.status(409).send({
+							error: "Username already taken",
+							success: false,
+						});
+					}
+					throw e;
+				}
 
 				if (updatedUser.length === 0) {
 					return reply.status(404).send({

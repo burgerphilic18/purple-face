@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "../mode-toggle";
 import { useAuth } from "@/contexts/AuthContext";
+import { ModeToggle } from "../mode-toggle";
 
 const Header = () => {
 	const { user, isLoading, isAuthenticated, login, logout } = useAuth();

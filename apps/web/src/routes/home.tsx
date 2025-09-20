@@ -1,6 +1,5 @@
 // Using divs with custom styling instead of Card to have full control over the color scheme
 import { Clock, MessageSquare, Pin, TrendingUp, Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Footer from "@/components/ui/footer";
 import Header from "@/components/ui/header";
 

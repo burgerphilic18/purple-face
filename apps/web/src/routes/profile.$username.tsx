@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router";
+import { Link, useParams } from "react-router";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/contexts/AuthContext";
-import Header from "@/components/ui/header";
 import Footer from "@/components/ui/footer";
+import Header from "@/components/ui/header";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface UserProfile {
 	id: string;
@@ -26,7 +26,7 @@ interface ProfileResponse {
 
 export default function ProfilePage() {
 	const { username } = useParams<{ username: string }>();
-	const { user: currentUser, isAuthenticated } = useAuth();
+	const { user: _currentUser } = useAuth();
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [isOwnProfile, setIsOwnProfile] = useState(false);
 	const [loading, setLoading] = useState(true);
@@ -66,7 +66,7 @@ export default function ProfilePage() {
 		};
 
 		fetchProfile();
-	}, [username, backendUrl]);
+	}, [username]);
 
 	if (loading) {
 		return (

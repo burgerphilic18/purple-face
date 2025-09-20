@@ -1,9 +1,10 @@
 import {
 	createContext,
+	type ReactNode,
+	useCallback,
 	useContext,
 	useEffect,
 	useState,
-	type ReactNode,
 } from "react";
 
 interface User {
@@ -49,7 +50,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 	const backendUrl =
 		import.meta.env.VITE_BACKEND_API_URL || "http://localhost:3000";
 
-	const checkAuth = async () => {
+	const checkAuth = useCallback(async () => {
 		try {
 			setIsLoading(true);
 			const response = await fetch(`${backendUrl}/user/me`, {
@@ -68,11 +69,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		checkAuth();
-	}, []);
+	}, [checkAuth]);
 
 	const login = () => {
 		const fullUrl = `${backendUrl}/auth/google`;
