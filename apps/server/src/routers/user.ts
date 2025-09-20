@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
 import { DrizzleClient } from "../db/index";
 import { users } from "../db/schema/user.schema";
-import { userDetailsParamsSchema, userUpdateSchema } from "../dto/user.dto";
+import { userDetailsParamsSchema, userUpdateSchema , User } from "../dto/user.dto";
 import { authenticateUser, optionalAuth } from "./auth";
 
 export async function userRoutes(fastify: FastifyInstance) {
@@ -31,43 +31,32 @@ export async function userRoutes(fastify: FastifyInstance) {
 				const isOwnProfile = authenticatedUserId === user.id;
 
 				// Return different levels of detail based on whether it's own profile
-				if (isOwnProfile) {
-					// Full profile for own account
-					return reply.send({
-						success: true,
-						isOwnProfile: true,
-						user: {
-							id: user.id,
-							email: user.email,
-							username: user.username,
-							firstName: user.firstName,
-							lastName: user.lastName,
-							pronouns: user.pronouns,
-							bio: user.bio,
-							branch: user.branch,
-							passingOutYear: user.passingOutYear,
-							totalPosts: user.totalPosts,
-						},
-					});
-				} else {
-					// Public profile for others
-					return reply.send({
-						success: true,
-						isOwnProfile: false,
-						user: {
-							id: user.id,
-							username: user.username,
-							firstName: user.firstName,
-							lastName: user.lastName,
-							pronouns: user.pronouns,
-							bio: user.bio,
-							branch: user.branch,
-							passingOutYear: user.passingOutYear,
-							totalPosts: user.totalPosts,
-							// Note: email is not exposed for other users
-						},
-					});
-				}
+				const formatUserForResponse = (user: User, isOwner: boolean) => {
+					const publicProfile = {
+						id: user.id,
+						username: user.username,
+						firstName: user.firstName,
+						lastName: user.lastName,
+						pronouns: user.pronouns,
+						bio: user.bio,
+						branch: user.branch,
+						passingOutYear: user.passingOutYear,
+						totalPosts: user.totalPosts,
+					};
+
+					if (isOwner) {
+						return { ...publicProfile, email: user.email };
+					}
+
+					return publicProfile;
+				};
+
+				const responseUser = formatUserForResponse(user, isOwnProfile);
+				return reply.send({
+					success: true,
+					isOwnProfile,
+					user: responseUser,
+				});
 			} catch (err) {
 				fastify.log.error("Error fetching user details:", err);
 				return reply.status(500).send({

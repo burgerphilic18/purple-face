@@ -1,5 +1,7 @@
 import { z } from "zod";
+import { users } from "../db/schema/user.schema";
 
+export type User = typeof users.$inferSelect; 
 export const userDetailsParamsSchema = z.object({
 	username: z
 		.string()
@@ -16,7 +18,6 @@ export const userIdParamsSchema = z.object({
 	id: z.string().uuid(),
 });
 export type UserIdParams = z.infer<typeof userIdParamsSchema>;
-
 export const userUpdateSchema = z
 	.object({
 		username: z
