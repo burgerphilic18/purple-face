@@ -13,3 +13,13 @@ export const createTopicSchema = z.object({
 });
 
 export type CreateTopicInput = z.infer<typeof createTopicSchema>;
+
+export const updateTopicSchema = z
+	.object({
+		name: z.string().min(1).max(100).optional(),
+		description: z.string().min(1).max(500).optional(),
+	})
+	.refine((data) => Object.keys(data).length > 0, {
+		message: "At least one field must be provided",
+	});
+export type UpdateTopicInput = z.infer<typeof updateTopicSchema>;
