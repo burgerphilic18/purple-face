@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { FastifyInstance } from "fastify";
-import { DrizzleClient } from "../db/index";
 import { users } from "@/db/schema/user.schema";
+import { DrizzleClient } from "../db/index";
 import {
 	type User,
 	userDetailsParamsSchema,
@@ -198,31 +198,48 @@ export async function userRoutes(fastify: FastifyInstance) {
 		},
 	);
 
-	fastify.delete("/me", { preHandler: authenticateUser }, async (request, reply) => {
-		const authenticateduserId = request.userId;
+	fastify.delete(
+		"/me",
+		{ preHandler: authenticateUser },
+		async (request, reply) => {
+			const authenticateduserId = request.userId;
 
-		if (!authenticateduserId) {
-			return reply.status(401).send({ error: "Unauthorized", success: false });
-		}
+			if (!authenticateduserId) {
+				return reply
+					.status(401)
+					.send({ error: "Unauthorized", success: false });
+			}
 
-		const user = await DrizzleClient.query.users.findFirst({
-			where: (u, { eq }) => eq(u.id, authenticateduserId),
-		});
-
-		if (!user) {
-			return reply.status(404).send({ error: "User not found", success: false });
-		}
-		try {
-			const deletedUser = await DrizzleClient.delete(users).where(eq(users.id, authenticateduserId));
-			return reply.send({ success: true, message: "User deleted successfully" });
-		} catch (err) {
-			fastify.log.error("Error deleting user:", err);
-			return reply.status(500).send({
-				error: "Failed to delete user",
-				success: false,
-				details: err instanceof Error ? err.message : "Unknown error",
+			const user = await DrizzleClient.query.users.findFirst({
+				where: (u, { eq }) => eq(u.id, authenticateduserId),
 			});
-		}
-	});
 
+			if (!user) {
+				return reply
+					.status(404)
+					.send({ error: "User not found", success: false });
+			}
+			try {
+				const deletedUser = await DrizzleClient.delete(users).where(
+					eq(users.id, authenticateduserId),
+				);
+				if (!deletedUser) {
+					return reply
+						.status(404)
+						.send({ error: "User not found", success: false });
+				}
+				return reply.send({
+					success: true,
+					message: "User deleted successfully",
+				});
+			} catch (err) {
+				fastify.log.error("Error deleting user:", err);
+				return reply.status(500).send({
+					error: "Failed to delete user",
+					success: false,
+					details: err instanceof Error ? err.message : "Unknown error",
+				});
+			}
+		},
+	);
 }

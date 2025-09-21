@@ -1,8 +1,8 @@
 import crypto from "node:crypto";
 import type { FastifyInstance } from "fastify";
 import jwt from "jsonwebtoken";
-import { DrizzleClient } from "../db/index";
 import { users } from "@/db/schema/user.schema";
+import { DrizzleClient } from "../db/index";
 import {
 	createUserSchema,
 	type GoogleTokenInfo,
